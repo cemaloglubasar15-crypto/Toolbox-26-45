@@ -2,9 +2,6 @@ name: Build Toolbox APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build:
@@ -14,7 +11,7 @@ jobs:
       - name: Dosyalari al
         uses: actions/checkout@v4
 
-      - name: Java 17
+      - name: Java 17 kur
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -23,39 +20,48 @@ jobs:
       - name: Android kur
         uses: android-actions/setup-android@v3
 
-      - name: Projeyi ZIP'ten cikar
+      - name: ZIP dosyasini ac
         run: |
           mkdir project
-          unzip -q Toolbox-26.45-CLEAN-ANDROID-SOURCE.zip -d project
+          unzip -q Toolbox-26.45-API36-GOOGLE-PLAY.zip -d project
 
-      - name: Kaynak duzeltmesi
+      - name: Projeyi API 36 icin duzelt
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
+          b = Path("project/build.gradle")
+          s = b.read_text()
+          s = s.replace("version '8.7.3'", "version '8.10.1'")
+          b.write_text(s)
+
           p = Path("project/app/src/main/java/com/aziz/toolbox2645/OverlayService.java")
           s = p.read_text()
-          marker = "private void showGive()"
-          pos = s.index(marker)
-          start = s.index("        new AlertDialog.Builder(this)", pos)
-          end = s.index("        AlertDialog ad = new AlertDialog.Builder(this)", start)
-          s = s[:start] + s[end:]
+
+          pos = s.find("private void showGive()")
+          start = s.find("        new AlertDialog.Builder(this)", pos)
+          end = s.find("        AlertDialog ad = new AlertDialog.Builder(this)", start)
+
+          if start != -1 and end != -1:
+              s = s[:start] + s[end:]
+
           p.write_text(s)
           PY
 
       - name: Gradle kur
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.10.2'
+          gradle-version: '8.11.1'
 
-      - name: Android SDK 35
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Android API 36 kur
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: APK olustur
         working-directory: project
         run: gradle :app:assembleDebug
 
-      - name: APK'yi yukle
+      - name: APK dosyasini kaydet
         uses: actions/upload-artifact@v4
         with:
-          name: Toolbox-26.45-APK
+          name: Toolbox-26.45-Firebase-APK
           path: project/app/build/outputs/apk/debug/app-debug.apk
