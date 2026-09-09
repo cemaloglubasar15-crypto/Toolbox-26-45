@@ -1,0 +1,44 @@
+name: Build Toolbox FIX3 APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dosyalari al
+        uses: actions/checkout@v4
+
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK kur
+        uses: android-actions/setup-android@v3
+
+      - name: FIX3 kaynaklarini ac
+        run: |
+          mkdir project
+          unzip -q Toolbox-26.45-FIX3-DRAG-CONNECTION.zip -d project
+
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Android API 36 kur
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: FIX3 APK olustur
+        working-directory: project
+        run: gradle :app:assembleDebug
+
+      - name: APK dosyasini kaydet
+        uses: actions/upload-artifact@v4
+        with:
+          name: Toolbox-26.45-FIX3-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
