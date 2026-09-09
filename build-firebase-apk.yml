@@ -20,33 +20,10 @@ jobs:
       - name: Android kur
         uses: android-actions/setup-android@v3
 
-      - name: ZIP dosyasini ac
+      - name: FIX3 ZIP dosyasini ac
         run: |
           mkdir project
-          unzip -q Toolbox-26.45-API36-GOOGLE-PLAY.zip -d project
-
-      - name: Projeyi duzelt
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          b = Path("project/build.gradle")
-          s = b.read_text()
-          s = s.replace("version '8.7.3'", "version '8.10.1'")
-          b.write_text(s)
-
-          p = Path("project/app/src/main/java/com/aziz/toolbox2645/OverlayService.java")
-          s = p.read_text()
-
-          pos = s.find("private void showGive()")
-          start = s.find("        new AlertDialog.Builder(this)", pos)
-          end = s.find("        AlertDialog ad = new AlertDialog.Builder(this)", start)
-
-          if start != -1 and end != -1:
-              s = s[:start] + s[end:]
-
-          p.write_text(s)
-          PY
+          unzip -q Toolbox-26.45-FIX3-DRAG-CONNECTION.zip -d project
 
       - name: Gradle kur
         uses: gradle/actions/setup-gradle@v4
@@ -63,5 +40,5 @@ jobs:
       - name: APK dosyasini kaydet
         uses: actions/upload-artifact@v4
         with:
-          name: Toolbox-26.45-Firebase-APK
+          name: Toolbox-26.45-FIX3-APK
           path: project/app/build/outputs/apk/debug/app-debug.apk
