@@ -28,6 +28,21 @@ jobs:
           mkdir project
           unzip -q Toolbox-26.45-CLEAN-ANDROID-SOURCE.zip -d project
 
+      - name: Kaynak hatasini duzelt
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("project/app/src/main/java/com/aziz/toolbox2645/OverlayService.java")
+          s = p.read_text()
+
+          pos = s.index("private void showGive()")
+          start = s.index("        new AlertDialog.Builder(this)", pos)
+          end = s.index("        AlertDialog ad = new AlertDialog.Builder(this)", start)
+
+          s = s[:start] + s[end:]
+          p.write_text(s)
+          PY
+
       - name: Gradle kur
         uses: gradle/actions/setup-gradle@v4
         with:
