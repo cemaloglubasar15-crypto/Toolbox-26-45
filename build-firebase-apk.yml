@@ -1,36 +1,67 @@
-# This is a basic workflow to help you get started with Actions
+name: Build Toolbox Firebase APK
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Dosyalari al
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Android kur
+        uses: android-actions/setup-android@v3
+
+      - name: ZIP dosyasini ac
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          mkdir project
+          unzip -q Toolbox-26.45-API36-GOOGLE-PLAY.zip -d project
+
+      - name: Projeyi duzelt
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          b = Path("project/build.gradle")
+          s = b.read_text()
+          s = s.replace("version '8.7.3'", "version '8.10.1'")
+          b.write_text(s)
+
+          p = Path("project/app/src/main/java/com/aziz/toolbox2645/OverlayService.java")
+          s = p.read_text()
+
+          pos = s.find("private void showGive()")
+          start = s.find("        new AlertDialog.Builder(this)", pos)
+          end = s.find("        AlertDialog ad = new AlertDialog.Builder(this)", start)
+
+          if start != -1 and end != -1:
+              s = s[:start] + s[end:]
+
+          p.write_text(s)
+          PY
+
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Android API 36 kur
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: APK olustur
+        working-directory: project
+        run: gradle :app:assembleDebug
+
+      - name: APK dosyasini kaydet
+        uses: actions/upload-artifact@v4
+        with:
+          name: Toolbox-26.45-Firebase-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
